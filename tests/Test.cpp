@@ -124,7 +124,7 @@ TEST_CASE("Pool diff: complex") {
 }
 
 TEST_CASE("Pool diff: perf") {
-	constexpr auto size = size_t{10000};
+	constexpr auto size = size_t{1000000};
 	auto oldpool = Pool{size};
 	auto newpool = Pool{size};
 	std::srand(unsigned(std::time(nullptr)));

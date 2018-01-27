@@ -22,7 +22,7 @@ namespace netutils {
 			return right.first <= left.second && right.second >= left.first;
 		}
 		
-		FastPool diff2Ranges(FastPool& res, const Range& left, const Range& right) {
+		void diff2Ranges(FastPool& res, const Range& left, const Range& right) {
 			res.count = 0;
 			
 			if(left.first < right.first)
@@ -30,8 +30,6 @@ namespace netutils {
 			
 			if(left.second > right.second)
 				res.ranges[res.count++] = {std::max(left.first, right.second + 1), left.second};
-			
-			return res;
 		}
 		
 		// assuming sorted
@@ -57,11 +55,17 @@ namespace netutils {
 	
 	Pool find_diff(const Pool& old_pool, const Pool& new_pool) {
 		Pool result;
+		// not the best solution to build this structure inside the function instead of supporting Interval Tree
+		std::vector<IPAddress> maxUppBoundUpTo(new_pool.size());
 		
 		// assuming pools are sorted
 		// check in debug
 		assert(std::is_sorted(old_pool.cbegin(), old_pool.cend(), rangeCmp));
 		assert(std::is_sorted(new_pool.cbegin(), new_pool.cend(), rangeCmp));
+		
+		// write upp bounds of ranges up to index in new_pool into container so we wont have to traverse whole new_pool on every iteration
+		for(auto idx = size_t{0}; idx < new_pool.size(); ++idx)
+			maxUppBoundUpTo[idx] = std::max(new_pool[idx].second, (idx > 0 ? maxUppBoundUpTo[idx - 1] : 0));
 		
 		// find diff
 		// easily parallelizable
@@ -70,19 +74,16 @@ namespace netutils {
 			const auto uppbound = std::lower_bound(new_pool.cbegin(), new_pool.cend(), orange.second, [](const auto& range, const auto val) {
 				return range.first < val;
 			});
-			
-			// if uppbound is cbegin it means no overlap
-			if(uppbound == new_pool.cbegin()) {
-				result.push_back(orange);
-				continue;
-			}
-			
+			const auto lowbound = std::upper_bound(maxUppBoundUpTo.cbegin(), maxUppBoundUpTo.cend(), orange.first, [](const auto uppbound, const auto val) {
+				return uppbound < val;
+			});
+			const auto lowboundIdx = std::distance(maxUppBoundUpTo.cbegin(), lowbound);
 			auto curr = orange;
 			auto currHasValue = true; // no optional in c++ lib shipped with xcode :D
 			FastPool nonOverlappingDiff;
 			
 			// find not overlapping intervals
-			for(auto iter = new_pool.cbegin(); iter < uppbound; ++iter) {
+			for(auto iter = new_pool.cbegin() + lowboundIdx; iter < uppbound; ++iter) {
 				diff2Ranges(nonOverlappingDiff, curr, *iter);
 				
 				switch(nonOverlappingDiff.count) {
@@ -105,7 +106,7 @@ namespace netutils {
 				result.push_back(curr);
 		}
 		
-		// input vectors ranges may overlap by the problem def, but why merge overlaps for output
+		// input vectors ranges may overlap by the problem def, but i dont see why not merge overlaps for output
 		merge(result);
 		// output is sorted as is input
 		std::sort(result.begin(), result.end(), rangeCmp);
