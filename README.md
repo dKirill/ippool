@@ -12,7 +12,7 @@ after clone, since Catch2 unit test framework is included as submodule
 ## makefile
 ```
 mkdir build-make && cd build-make
-cmake .. -G"Unix Makefiles"
+cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
 make
 ./tests
 ```
