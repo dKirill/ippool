@@ -1,5 +1,5 @@
 # Intro
-Tested on macOS 10.13.2 + XCode9
+Tested on macOS 10.13.2 + Xсode9
 
 # Preparation
 Do not forget to 
@@ -17,7 +17,7 @@ make
 ./tests
 ```
 
-## XCode
+## Xсode
 ```
 mkdir build-xcode && cd build-xcode
 cmake .. -GXcode
