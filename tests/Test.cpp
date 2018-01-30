@@ -33,6 +33,32 @@ TEST_CASE("Range cmp") {
 	REQUIRE(!rangeCmp(bigger, lesser));
 }
 
+TEST_CASE("Pool diff: eq borders") {
+	{
+		Pool old_pool = {{10, 17}};
+		Pool new_pool = {{9, 13}, {17, 30}};
+		auto expired = find_diff(old_pool, new_pool);
+		
+		REQUIRE(expired[0] == Range{14, 16});
+	}
+	
+	{
+		Pool old_pool = {{10, 17}};
+		Pool new_pool = {{9, 10}, {17, 30}};
+		auto expired = find_diff(old_pool, new_pool);
+		
+		REQUIRE(expired[0] == Range{11, 16});
+	}
+	
+	{
+		Pool old_pool = {{10, 17}};
+		Pool new_pool = {{8, 13}, {9, 11}, {17, 30}};
+		auto expired = find_diff(old_pool, new_pool);
+		
+		REQUIRE(expired[0] == Range{14, 16});
+	}
+}
+
 TEST_CASE("Pool diff: match") {
 	auto oldpool = Pool{{ 0xAA'00'00'01, 0xFE'00'00'01 }, { 0xFF'00'00'01, 0xFF'00'00'FF }};
 	auto newpool = Pool{oldpool};

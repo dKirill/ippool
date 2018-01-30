@@ -70,11 +70,12 @@ namespace netutils {
 		// find diff
 		// easily parallelizable
 		for(const auto& orange : old_pool) {
-			// find upper bound. we cant find lower bound with given types
-			const auto uppbound = std::lower_bound(new_pool.cbegin(), new_pool.cend(), orange.second, [](const auto& range, const auto val) {
-				return range.first < val;
+			// find first range which first is greater than orange.second
+			const auto uppbound = std::upper_bound(new_pool.cbegin(), new_pool.cend(), orange.second, [](const auto val, const auto& range) {
+				return val < range.first;
 			});
-			const auto lowbound = std::upper_bound(maxUppBoundUpTo.cbegin(), maxUppBoundUpTo.cend(), orange.first, [](const auto uppbound, const auto val) {
+			// find first range which second is not less than orange.first
+			const auto lowbound = std::lower_bound(maxUppBoundUpTo.cbegin(), maxUppBoundUpTo.cend(), orange.first, [](const auto uppbound, const auto val) {
 				return uppbound < val;
 			});
 			const auto lowboundIdx = std::distance(maxUppBoundUpTo.cbegin(), lowbound);
@@ -82,7 +83,7 @@ namespace netutils {
 			auto currHasValue = true; // no optional in c++ lib shipped with xcode :D
 			FastPool nonOverlappingDiff;
 			
-			// find not overlapping intervals
+			// iterate over overlapping ranges
 			for(auto iter = new_pool.cbegin() + lowboundIdx; iter < uppbound; ++iter) {
 				diff2Ranges(nonOverlappingDiff, curr, *iter);
 				
